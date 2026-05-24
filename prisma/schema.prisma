@@ -1,0 +1,88 @@
+// Med spa AI receptionist — data model.
+// Prisma 7: the datasource has no `url` here; it lives in prisma.config.ts.
+// Runtime queries use the @prisma/adapter-neon driver adapter (see src/lib/db.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  fullName  String
+  phone     String   @unique // E.164 (+15551234567). The key we match inbound callers on.
+  email     String?
+  notes     String? // allergies, preferences, anything the front desk would remember
+  createdAt DateTime @default(now())
+
+  appointments    Appointment[]
+  waitlistEntries WaitlistEntry[]
+}
+
+model StaffMember {
+  id    String @id @default(cuid())
+  name  String
+  title String // e.g. "Nurse Injector", "Aesthetician"
+
+  appointments Appointment[]
+}
+
+model Service {
+  id              String @id @default(cuid())
+  name            String @unique
+  description     String
+  durationMinutes Int
+  priceCents      Int
+
+  appointments    Appointment[]
+  waitlistEntries WaitlistEntry[]
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Appointment {
+  id         String            @id @default(cuid())
+  customer   Customer          @relation(fields: [customerId], references: [id])
+  customerId String
+  service    Service           @relation(fields: [serviceId], references: [id])
+  serviceId  String
+  staff      StaffMember       @relation(fields: [staffId], references: [id])
+  staffId    String
+  startTime  DateTime
+  endTime    DateTime
+  status     AppointmentStatus @default(BOOKED)
+  createdAt  DateTime          @default(now())
+
+  @@index([staffId, startTime])
+  @@index([startTime, status])
+}
+
+enum WaitlistStatus {
+  WAITING // wants a slot, none free yet
+  NOTIFIED // we texted them about a freed slot
+  CONVERTED // they took a freed slot
+  EXPIRED // window passed
+}
+
+model WaitlistEntry {
+  id           String         @id @default(cuid())
+  customer     Customer       @relation(fields: [customerId], references: [id])
+  customerId   String
+  service      Service        @relation(fields: [serviceId], references: [id])
+  serviceId    String
+  earliestDate DateTime // start of the window the client will accept
+  latestDate   DateTime // end of that window
+  status       WaitlistStatus @default(WAITING)
+  notifiedAt   DateTime?
+  createdAt    DateTime       @default(now())
+
+  @@index([serviceId, status])
+}

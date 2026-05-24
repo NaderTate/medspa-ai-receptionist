@@ -1,0 +1,33 @@
+{
+  "name": "medspa-ai-receptionist",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AI phone receptionist for a med spa — books, reschedules, cancels, and auto-fills cancellations from a waitlist. Vapi front-end, this backend does the work.",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "db:generate": "bunx prisma generate",
+    "db:push": "bunx prisma db push",
+    "seed": "bun run prisma/seed.ts",
+    "simulate": "bun run scripts/simulate-call.ts",
+    "reminders": "bun run scripts/send-reminders.ts",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "@prisma/adapter-neon": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "express": "^5.1.0",
+    "twilio": "^5.10.2",
+    "ws": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^22",
+    "@types/ws": "^8.18.1",
+    "dotenv": "^17.4.2",
+    "prisma": "^7.8.0",
+    "typescript": "^5"
+  }
+}
