@@ -1,0 +1,51 @@
+@import 'tailwindcss';
+
+/* Design tokens — "quiet-luxury spa editorial".
+   Warm porcelain ground, ink charcoal text, one refined clay accent, a whisper
+   of gold for the standout (waitlist) moments. */
+@theme {
+  --color-porcelain: #f4f0e9;
+  --color-porcelain-deep: #ece6db;
+  --color-surface: #fcfaf6;
+  --color-ink: #211d18;
+  --color-ink-soft: #4b443c;
+  --color-muted: #8c8276;
+  --color-line: #e6dfd2;
+  --color-clay: #a85d4c;
+  --color-clay-deep: #8a4636;
+  --color-clay-soft: #efe1d9;
+  --color-gold: #a98b54;
+  --color-gold-soft: #efe6d2;
+  --color-sage: #6f7d63;
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Hanken Grotesk', system-ui, sans-serif;
+}
+
+html {
+  background-color: var(--color-porcelain);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Subtle paper grain so the background has depth instead of a flat fill. */
+.grain::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+/* Tabular figures keep times and prices aligned in the schedule + tables. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}

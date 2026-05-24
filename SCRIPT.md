@@ -110,7 +110,25 @@ Demo data is already seeded (`bun run seed`). The returning client is **Sarah Ch
 
 ---
 
-## 6. WHAT IT COSTS / WHAT YOU CHARGE (10:30 - 12:00)
+## 6. THE DASHBOARD — make it tangible (10:00 - 11:00)
+
+> The dashboard makes this feel like a real product, not a script. Have it open for the cold open too, then come back to it here.
+
+**[SHOW]** The front-desk dashboard at http://localhost:5173 (`cd frontend && bun run dev`). Full screen.
+
+**[SAY]**
+> "This is what the spa owner actually sees. Today's schedule, the waitlist, every client the AI knows, and the numbers that matter: bookings today, revenue booked this week, and how many cancellations the waitlist quietly re-filled."
+
+**[DEMO]** The magic moment. With the dashboard on screen, run the cancel (real call or `bun run simulate`). It auto-refreshes every 15 seconds:
+- "Saved by waitlist" ticks from 0 to 1.
+- Maria's waitlist row flips to a gold "Texted" badge.
+
+**[SAY]**
+> "Watch the top right. A cancellation just came in, and the waitlist counter went up by one, automatically. That number is money the spa would have lost."
+
+---
+
+## 7. WHAT IT COSTS / WHAT YOU CHARGE (11:00 - 12:30)
 
 **[SHOW]** Simple on-screen math (Miro pricing panel).
 
@@ -121,7 +139,7 @@ Demo data is already seeded (`bun run seed`). The returning client is **Sarah Ch
 
 ---
 
-## 7. CTA + CLOSE (12:00 - end)
+## 8. CTA + CLOSE (12:30 - end)
 
 **[SAY]**
 > "Full code's free, link in the description, it's a public repo. If you run a med spa, or you build for businesses and want to deploy this, the call link is below. And tell me what vertical I should do next, dental, law firms, home services."
@@ -134,7 +152,8 @@ Demo data is already seeded (`bun run seed`). The returning client is **Sarah Ch
 
 ## Pre-record checklist
 
-- [ ] `bun run seed` for a clean demo (Sarah has tomorrow's Botox, Maria is waitlisted).
+- [ ] `bun run seed` for a clean demo (Sarah has tomorrow's Botox, Maria is waitlisted; 4 appts today fill the dashboard).
+- [ ] Dashboard running (`cd frontend && bun run dev`, open http://localhost:5173) on a second monitor for the cold open + section 6. It auto-refreshes every 15s.
 - [ ] Real Vapi number wired (`/vapi/webhook` + `x-vapi-secret`) for the cold-open + hero call.
 - [ ] Phone with a number that's in the DB (so personalization fires on camera).
 - [ ] Twilio keys set if you want real texts on screen (otherwise show the console log-only output).

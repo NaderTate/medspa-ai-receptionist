@@ -39,6 +39,20 @@ It plays two calls end-to-end against the webhook:
 1. **Sarah** (a returning client) cancels tomorrow's Botox — watch the waitlist text fire to **Maria**.
 2. A **new caller** registers and books an opening.
 
+## Dashboard (frontend)
+
+A clean front-desk dashboard that shows everything the receptionist is doing: today's schedule, the waitlist, clients, the service menu, and live stats (today's bookings, revenue booked this week, slots the waitlist re-filled). It reads the backend's `GET /api/dashboard` and auto-refreshes every 15s, so a booking or cancellation on a call shows up on screen within seconds.
+
+Stack: Vite + React + TypeScript + Tailwind v4 + Motion. Design is a warm "quiet-luxury spa editorial" look (Cormorant Garamond + Hanken Grotesk).
+
+```bash
+# with the backend already running on :3000
+cd frontend
+bun install
+cp .env.example .env     # VITE_API_URL defaults to http://localhost:3000
+bun run dev              # dashboard on http://localhost:5173
+```
+
 ## Wire it to Vapi (the 5-minute part)
 
 1. Deploy this server somewhere public (or use a tunnel like `ngrok http 3000` for testing).
@@ -72,7 +86,9 @@ Read it top to bottom: `routes/vapi.ts` is the front door, `vapi/` decides what 
 src/
   index.ts                 # Express server
   config.ts                # spa name, opening hours, slot size
-  routes/vapi.ts           # the one webhook Vapi calls
+  routes/
+    vapi.ts                # the one webhook Vapi calls
+    api.ts                 # read-only GET /api/dashboard for the frontend
   vapi/
     personalization.ts     # builds the per-caller assistant (the "remembers you" magic)
     tools.ts               # the actions the agent can take mid-call
@@ -82,6 +98,7 @@ src/
     availability.ts        # which start times are actually free
     booking.ts             # book / reschedule / cancel (+ side effects)
     waitlist.ts            # the auto-fill-on-cancel logic
+    dashboard.ts           # builds the dashboard payload
     sms.ts                 # Twilio (or log-only) texting
     time.ts                # small date helpers
 prisma/
@@ -90,6 +107,9 @@ prisma/
 scripts/
   simulate-call.ts         # test the whole thing with no phone
   send-reminders.ts        # daily 24h-out reminder texts
+frontend/                  # Vite + React + Tailwind dashboard (see "Dashboard" above)
+  src/components/          # StatRow, Schedule, Waitlist, Clients, Services
+  src/api.ts               # fetch + types for /api/dashboard
 ```
 
 ## Notes
