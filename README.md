@@ -41,7 +41,7 @@ It plays two calls end-to-end against the webhook:
 
 ## Dashboard (frontend)
 
-A clean front-desk dashboard that shows everything the receptionist is doing: today's schedule, the waitlist, clients, the service menu, and live stats (today's bookings, revenue booked this week, slots the waitlist re-filled). It reads the backend's `GET /api/dashboard` and auto-refreshes every 15s, so a booking or cancellation on a call shows up on screen within seconds.
+A clean front-desk dashboard that shows everything the receptionist is doing: today's schedule, the waitlist, clients, the service menu, and live stats (today's bookings, revenue booked this week, slots the waitlist re-filled). It reads the backend's `GET /api/dashboard` and auto-refreshes every 15s, so a booking or cancellation on a call shows up on screen within seconds. There's also a manual **Refresh** button in the header for an instant update.
 
 Stack: Vite + React + TypeScript + Tailwind v4 + Motion. Design is a warm "quiet-luxury spa editorial" look (Cormorant Garamond + Hanken Grotesk).
 

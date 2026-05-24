@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { fetchDashboard, type Dashboard } from './api';
 import { clockTime } from './format';
@@ -21,24 +21,46 @@ function Reveal({ delay, children }: { delay: number; children: React.ReactNode 
   );
 }
 
+function RefreshIcon({ spinning }: { spinning: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`size-3.5 ${spinning ? 'animate-spin' : ''}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+      <path d="M21 3v6h-6" />
+    </svg>
+  );
+}
+
 export function App() {
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // One loader, reused by the 15s auto-poll and the manual Refresh button.
+  const load = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      setData(await fetchDashboard());
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load');
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let active = true;
-    const load = () =>
-      fetchDashboard()
-        .then((d) => active && setData(d))
-        .catch((e) => active && setError(e.message));
     load();
-    // Re-poll so the board updates live when a call books or cancels.
     const timer = setInterval(load, 15_000);
-    return () => {
-      active = false;
-      clearInterval(timer);
-    };
-  }, []);
+    return () => clearInterval(timer);
+  }, [load]);
 
   if (error) {
     return (
@@ -73,14 +95,24 @@ export function App() {
                 {data.spaName}
               </h1>
             </div>
-            <div className="flex items-center gap-2.5 pb-1">
-              <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-sage opacity-60" />
-                <span className="relative inline-flex size-2 rounded-full bg-sage" />
-              </span>
-              <span className="font-body text-[12px] tracking-wide text-muted">
-                Receptionist live · as of {clockTime(data.generatedAt)}
-              </span>
+            <div className="flex flex-wrap items-center gap-4 pb-1">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-sage opacity-60" />
+                  <span className="relative inline-flex size-2 rounded-full bg-sage" />
+                </span>
+                <span className="font-body text-[12px] tracking-wide text-muted">
+                  Receptionist live · as of {clockTime(data.generatedAt)}
+                </span>
+              </div>
+              <button
+                onClick={load}
+                disabled={refreshing}
+                className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 font-body text-[12px] font-semibold tracking-wide text-ink-soft transition hover:border-clay hover:text-clay disabled:opacity-60"
+              >
+                <RefreshIcon spinning={refreshing} />
+                {refreshing ? 'Refreshing' : 'Refresh'}
+              </button>
             </div>
           </header>
         </Reveal>

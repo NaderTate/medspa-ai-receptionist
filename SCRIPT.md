@@ -119,7 +119,7 @@ Demo data is already seeded (`bun run seed`). The returning client is **Sarah Ch
 **[SAY]**
 > "This is what the spa owner actually sees. Today's schedule, the waitlist, every client the AI knows, and the numbers that matter: bookings today, revenue booked this week, and how many cancellations the waitlist quietly re-filled."
 
-**[DEMO]** The magic moment. With the dashboard on screen, run the cancel (real call or `bun run simulate`). It auto-refreshes every 15 seconds:
+**[DEMO]** The magic moment. With the dashboard on screen, run the cancel (real call or `bun run simulate`), then hit the **Refresh** button (top right) for an instant on-camera update instead of waiting for the 15s auto-poll:
 - "Saved by waitlist" ticks from 0 to 1.
 - Maria's waitlist row flips to a gold "Texted" badge.
 
