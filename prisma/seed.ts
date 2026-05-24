@@ -17,8 +17,6 @@ function dayFromNow(days: number, hour: number, minute = 0): Date {
   return d;
 }
 
-const todayAt = (hour: number, minute = 0) => dayFromNow(0, hour, minute);
-
 async function main() {
   // Clear in dependency order (children before parents).
   await prisma.waitlistEntry.deleteMany();
@@ -105,35 +103,55 @@ async function main() {
     },
   });
 
-  // A few more clients with appointments TODAY so the dashboard's schedule
-  // looks like a real working day.
+  // More clients + a week of appointments so the dashboard agenda has real
+  // volume to group by day and scroll through.
   const lipFiller = services[1]!;
   const peel = services[3]!;
   const microneedling = services[4]!;
 
-  const [priya, chloe, james] = await Promise.all([
+  const [priya, chloe, james, ava, noah, sofia] = await Promise.all([
     prisma.customer.create({ data: { fullName: 'Priya Nair', phone: '+15551230003', notes: 'HydraFacial regular.' } }),
-    prisma.customer.create({ data: { fullName: 'Chloe Bennett', phone: '+15551230004', notes: 'First lip filler — nervous, reassure.' } }),
+    prisma.customer.create({ data: { fullName: 'Chloe Bennett', phone: '+15551230004', notes: 'First lip filler, nervous, reassure.' } }),
     prisma.customer.create({ data: { fullName: 'James Okafor', phone: '+15551230005' } }),
+    prisma.customer.create({ data: { fullName: 'Ava Romano', phone: '+15551230006', notes: 'Prefers afternoons.' } }),
+    prisma.customer.create({ data: { fullName: 'Noah Park', phone: '+15551230007' } }),
+    prisma.customer.create({ data: { fullName: 'Sofia Reyes', phone: '+15551230008', notes: 'Sensitive skin, patch test done.' } }),
   ]);
 
-  const todaysBookings: Array<[string, string, string, Date]> = [
-    [priya.id, hydrafacial.id, marcus.id, todayAt(10, 0)],
-    [chloe.id, lipFiller.id, lena.id, todayAt(12, 30)],
-    [james.id, microneedling.id, marcus.id, todayAt(15, 30)],
-    [priya.id, peel.id, lena.id, todayAt(17, 0)],
+  const s = { botox: botox.id, lip: lipFiller.id, facial: hydrafacial.id, peel: peel.id, micro: microneedling.id };
+  const who = { lena: lena.id, marcus: marcus.id };
+
+  // [customerId, serviceId, staffId, dayOffset, hour, minute]
+  const bookings: Array<[string, string, string, number, number, number]> = [
+    [priya.id, s.facial, who.marcus, 0, 10, 0],
+    [chloe.id, s.lip, who.lena, 0, 12, 30],
+    [james.id, s.micro, who.marcus, 0, 15, 30],
+    [ava.id, s.peel, who.lena, 0, 17, 0],
+    [noah.id, s.facial, who.marcus, 1, 9, 30],
+    [sofia.id, s.botox, who.lena, 1, 11, 0],
+    [ava.id, s.lip, who.lena, 1, 16, 0],
+    [chloe.id, s.micro, who.marcus, 2, 13, 0],
+    [priya.id, s.botox, who.lena, 2, 15, 0],
+    [james.id, s.facial, who.marcus, 3, 11, 0],
+    [sofia.id, s.peel, who.lena, 3, 14, 30],
+    [noah.id, s.botox, who.lena, 3, 16, 30],
+    [ava.id, s.facial, who.marcus, 4, 10, 30],
+    [chloe.id, s.botox, who.lena, 4, 13, 0],
+    [priya.id, s.micro, who.marcus, 5, 12, 0],
+    [sofia.id, s.lip, who.lena, 5, 15, 0],
   ];
-  for (const [customerId, serviceId, staffId, startTime] of todaysBookings) {
-    const svc = services.find((s) => s.id === serviceId)!;
+  for (const [customerId, serviceId, staffId, day, hour, minute] of bookings) {
+    const svc = services.find((x) => x.id === serviceId)!;
+    const startTime = dayFromNow(day, hour, minute);
     await prisma.appointment.create({
       data: { customerId, serviceId, staffId, startTime, endTime: addMinutes(startTime, svc.durationMinutes), status: 'BOOKED' },
     });
   }
 
   console.log('Seeded:');
-  console.log(`  2 providers, ${services.length} services, 5 customers`);
-  console.log(`  ${todaysBookings.length} appointments today, plus Sarah's Botox tomorrow 2:00 PM`);
-  console.log(`  Sarah Chen (+15551230001) — returning, Botox tomorrow (the cancel demo)`);
+  console.log(`  2 providers, ${services.length} services, 8 customers`);
+  console.log(`  ${bookings.length + 2} booked appointments across the next 6 days`);
+  console.log(`  Sarah Chen (+15551230001) — returning, Botox tomorrow 2:00 PM (the cancel demo)`);
   console.log(`  Maria Lopez (+15551230002) — waitlisted for Botox this week`);
 }
 

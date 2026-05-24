@@ -3,10 +3,8 @@ import { motion } from 'motion/react';
 import { fetchDashboard, type Dashboard } from './api';
 import { clockTime } from './format';
 import { StatRow } from './components/StatRow';
-import { Schedule } from './components/Schedule';
-import { Waitlist } from './components/Waitlist';
-import { Clients } from './components/Clients';
-import { Services } from './components/Services';
+import { Appointments } from './components/Appointments';
+import { Queue } from './components/Queue';
 
 // Fade-up reveal with a stagger delay, used to choreograph the page load.
 function Reveal({ delay, children }: { delay: number; children: React.ReactNode }) {
@@ -88,12 +86,8 @@ export function App() {
         <Reveal delay={0}>
           <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-7">
             <div>
-              <p className="font-body text-[11px] font-semibold uppercase tracking-[0.3em] text-clay">
-                AI Front Desk
-              </p>
-              <h1 className="mt-1 font-display text-5xl font-medium tracking-tight text-ink lg:text-6xl">
-                {data.spaName}
-              </h1>
+              <p className="font-body text-[11px] font-semibold uppercase tracking-[0.3em] text-clay">AI Front Desk</p>
+              <h1 className="mt-1 font-display text-5xl font-medium tracking-tight text-ink lg:text-6xl">{data.spaName}</h1>
             </div>
             <div className="flex flex-wrap items-center gap-4 pb-1">
               <div className="flex items-center gap-2.5">
@@ -124,25 +118,19 @@ export function App() {
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12">
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-8">
             <Reveal delay={0.16}>
-              <Schedule today={data.schedule} upcoming={data.upcoming} />
+              <Appointments appointments={data.appointments} />
             </Reveal>
           </div>
-          <div className="flex flex-col gap-6 lg:col-span-5">
-            <Reveal delay={0.24}>
-              <Waitlist rows={data.waitlist} />
-            </Reveal>
-            <Reveal delay={0.32}>
-              <Services services={data.services} />
-            </Reveal>
+          <div className="lg:col-span-4">
+            {/* Sticky so the queue stays in view while a long agenda scrolls. */}
+            <div className="lg:sticky lg:top-6">
+              <Reveal delay={0.24}>
+                <Queue rows={data.queue} />
+              </Reveal>
+            </div>
           </div>
-        </div>
-
-        <div className="mt-6">
-          <Reveal delay={0.4}>
-            <Clients clients={data.clients} />
-          </Reveal>
         </div>
 
         <footer className="mt-12 text-center font-body text-[11px] tracking-wide text-muted">

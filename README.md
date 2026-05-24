@@ -41,7 +41,7 @@ It plays two calls end-to-end against the webhook:
 
 ## Dashboard (frontend)
 
-A clean front-desk dashboard that shows everything the receptionist is doing: today's schedule, the waitlist, clients, the service menu, and live stats (today's bookings, revenue booked this week, slots the waitlist re-filled). It reads the backend's `GET /api/dashboard` and auto-refreshes every 15s, so a booking or cancellation on a call shows up on screen within seconds. There's also a manual **Refresh** button in the header for an instant update.
+A focused front-desk dashboard: the **booked appointments** (a day-grouped agenda that scales to a full week of bookings) and the **waitlist queue**, plus at-a-glance stats (today, this week, in queue, slots the waitlist re-filled). It reads the backend's `GET /api/dashboard` and auto-refreshes every 15s, so a booking or cancellation on a call shows up on screen within seconds. There's also a manual **Refresh** button in the header for an instant update.
 
 Stack: Vite + React + TypeScript + Tailwind v4 + Motion. Design is a warm "quiet-luxury spa editorial" look (Cormorant Garamond + Hanken Grotesk).
 
@@ -108,7 +108,7 @@ scripts/
   simulate-call.ts         # test the whole thing with no phone
   send-reminders.ts        # daily 24h-out reminder texts
 frontend/                  # Vite + React + Tailwind dashboard (see "Dashboard" above)
-  src/components/          # StatRow, Schedule, Waitlist, Clients, Services
+  src/components/          # StatRow, Appointments (day-grouped agenda), Queue
   src/api.ts               # fetch + types for /api/dashboard
 ```
 

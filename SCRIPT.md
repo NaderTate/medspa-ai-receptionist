@@ -117,7 +117,7 @@ Demo data is already seeded (`bun run seed`). The returning client is **Sarah Ch
 **[SHOW]** The front-desk dashboard at http://localhost:5173 (`cd frontend && bun run dev`). Full screen.
 
 **[SAY]**
-> "This is what the spa owner actually sees. Today's schedule, the waitlist, every client the AI knows, and the numbers that matter: bookings today, revenue booked this week, and how many cancellations the waitlist quietly re-filled."
+> "This is what the spa owner sees. The whole week of booked appointments grouped by day, the waitlist queue, and the numbers that matter: appointments today, this week, who's waiting, and how many cancellations the waitlist quietly re-filled."
 
 **[DEMO]** The magic moment. With the dashboard on screen, run the cancel (real call or `bun run simulate`), then hit the **Refresh** button (top right) for an instant on-camera update instead of waiting for the 15s auto-poll:
 - "Saved by waitlist" ticks from 0 to 1.

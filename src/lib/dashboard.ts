@@ -1,7 +1,7 @@
-// Builds the single payload the dashboard frontend renders. One aggregate read
-// so the UI does one fetch and stays simple. Everything here is read-only.
+// Builds the single payload the dashboard frontend renders. The dashboard is
+// focused on two things: the booked appointments and the waitlist queue.
+// One aggregate read so the UI does one fetch. Everything here is read-only.
 
-import { Prisma } from '@prisma/client';
 import { prisma } from './db.js';
 import { nextDayStart, startOfDay } from './time.js';
 
@@ -11,16 +11,14 @@ export async function getDashboardData() {
   const tomorrowStart = nextDayStart(now);
   const weekEnd = new Date(now.getTime() + 7 * 24 * 60 * 60_000);
 
-  const [todays, upcoming, waitlist, customers, services, weekBooked] = await Promise.all([
+  const [appointments, queue] = await Promise.all([
+    // Every booked appointment from the start of today onward, oldest first.
+    // The frontend groups these by day; capped so one runaway query can't
+    // return thousands of rows.
     prisma.appointment.findMany({
-      where: { status: 'BOOKED', startTime: { gte: todayStart, lt: tomorrowStart } },
+      where: { status: 'BOOKED', startTime: { gte: todayStart } },
       orderBy: { startTime: 'asc' },
-      include: { customer: true, service: true, staff: true },
-    }),
-    prisma.appointment.findMany({
-      where: { status: 'BOOKED', startTime: { gte: tomorrowStart } },
-      orderBy: { startTime: 'asc' },
-      take: 8,
+      take: 200,
       include: { customer: true, service: true, staff: true },
     }),
     prisma.waitlistEntry.findMany({
@@ -28,35 +26,29 @@ export async function getDashboardData() {
       orderBy: { createdAt: 'asc' },
       include: { customer: true, service: true },
     }),
-    prisma.customer.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        appointments: { orderBy: { startTime: 'desc' }, include: { service: true } },
-      },
-    }),
-    prisma.service.findMany({ orderBy: { priceCents: 'desc' } }),
-    prisma.appointment.findMany({
-      where: { status: 'BOOKED', startTime: { gte: now, lt: weekEnd } },
-      include: { service: true },
-    }),
   ]);
 
-  const waitlistSaves = waitlist.filter((w) => w.status === 'NOTIFIED').length;
-  const revenueWeekCents = weekBooked.reduce((sum, a) => sum + a.service.priceCents, 0);
+  const todayCount = appointments.filter((a) => a.startTime < tomorrowStart).length;
+  const weekCount = appointments.filter((a) => a.startTime < weekEnd).length;
 
   return {
     spaName: 'Lumière Med Spa',
     generatedAt: now.toISOString(),
     stats: {
-      todayCount: todays.length,
-      weekCount: weekBooked.length,
-      waitlistWaiting: waitlist.filter((w) => w.status === 'WAITING').length,
-      waitlistSaves,
-      revenueWeekCents,
+      todayCount,
+      weekCount,
+      queueWaiting: queue.filter((w) => w.status === 'WAITING').length,
+      waitlistSaves: queue.filter((w) => w.status === 'NOTIFIED').length,
     },
-    schedule: todays.map(toAppointmentView),
-    upcoming: upcoming.map(toAppointmentView),
-    waitlist: waitlist.map((w) => ({
+    appointments: appointments.map((a) => ({
+      id: a.id,
+      startTime: a.startTime.toISOString(),
+      customerName: a.customer.fullName,
+      serviceName: a.service.name,
+      staffName: a.staff.name,
+      durationMinutes: a.service.durationMinutes,
+    })),
+    queue: queue.map((w) => ({
       id: w.id,
       customerName: w.customer.fullName,
       serviceName: w.service.name,
@@ -65,41 +57,5 @@ export async function getDashboardData() {
       status: w.status,
       notifiedAt: w.notifiedAt?.toISOString() ?? null,
     })),
-    clients: customers.map((c) => {
-      const completed = c.appointments.filter((a) => a.status === 'COMPLETED');
-      const lastVisit = completed[0];
-      return {
-        id: c.id,
-        fullName: c.fullName,
-        phone: c.phone,
-        notes: c.notes,
-        visitCount: completed.length,
-        lastVisitService: lastVisit?.service.name ?? null,
-        lastVisitDate: lastVisit?.startTime.toISOString() ?? null,
-      };
-    }),
-    services: services.map((s) => ({
-      id: s.id,
-      name: s.name,
-      description: s.description,
-      durationMinutes: s.durationMinutes,
-      priceCents: s.priceCents,
-    })),
-  };
-}
-
-type AppointmentWithRelations = Prisma.AppointmentGetPayload<{
-  include: { customer: true; service: true; staff: true };
-}>;
-
-function toAppointmentView(a: AppointmentWithRelations) {
-  return {
-    id: a.id,
-    startTime: a.startTime.toISOString(),
-    customerName: a.customer.fullName,
-    serviceName: a.service.name,
-    staffName: a.staff.name,
-    durationMinutes: a.service.durationMinutes,
-    priceCents: a.service.priceCents,
   };
 }

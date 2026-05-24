@@ -1,5 +1,6 @@
 // Types + fetch for the dashboard payload. Shapes mirror the backend's
-// src/lib/dashboard.ts exactly.
+// src/lib/dashboard.ts exactly. The dashboard shows two things: booked
+// appointments and the waitlist queue.
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
@@ -10,10 +11,9 @@ export type Appointment = {
   serviceName: string;
   staffName: string;
   durationMinutes: number;
-  priceCents: number;
 };
 
-export type WaitlistRow = {
+export type QueueRow = {
   id: string;
   customerName: string;
   serviceName: string;
@@ -23,39 +23,17 @@ export type WaitlistRow = {
   notifiedAt: string | null;
 };
 
-export type Client = {
-  id: string;
-  fullName: string;
-  phone: string;
-  notes: string | null;
-  visitCount: number;
-  lastVisitService: string | null;
-  lastVisitDate: string | null;
-};
-
-export type ServiceRow = {
-  id: string;
-  name: string;
-  description: string;
-  durationMinutes: number;
-  priceCents: number;
-};
-
 export type Dashboard = {
   spaName: string;
   generatedAt: string;
   stats: {
     todayCount: number;
     weekCount: number;
-    waitlistWaiting: number;
+    queueWaiting: number;
     waitlistSaves: number;
-    revenueWeekCents: number;
   };
-  schedule: Appointment[];
-  upcoming: Appointment[];
-  waitlist: WaitlistRow[];
-  clients: Client[];
-  services: ServiceRow[];
+  appointments: Appointment[];
+  queue: QueueRow[];
 };
 
 export async function fetchDashboard(): Promise<Dashboard> {

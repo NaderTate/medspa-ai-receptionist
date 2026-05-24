@@ -19,20 +19,6 @@ export function SectionTitle({ kicker, count }: { kicker: string; count?: ReactN
   );
 }
 
-export function Avatar({ name }: { name: string }) {
-  const initials = name
-    .split(' ')
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-  return (
-    <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-clay-soft font-display text-[15px] font-medium text-clay-deep">
-      {initials}
-    </div>
-  );
-}
-
 const STATUS_STYLES: Record<string, string> = {
   WAITING: 'bg-porcelain-deep text-ink-soft',
   NOTIFIED: 'bg-gold-soft text-gold',
