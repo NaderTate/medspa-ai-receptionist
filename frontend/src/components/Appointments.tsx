@@ -29,7 +29,6 @@ function Row({ appt }: { appt: Appointment }) {
       </div>
       <div className="hidden shrink-0 text-right sm:block">
         <p className="font-body text-[13px] text-ink-soft">{appt.staffName}</p>
-        <p className="font-body text-[11px] uppercase tracking-wide text-muted">provider</p>
       </div>
     </li>
   );
