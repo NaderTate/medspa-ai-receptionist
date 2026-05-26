@@ -50,7 +50,7 @@ enum AppointmentStatus {
 
 model Appointment {
   id         String            @id @default(cuid())
-  customer   Customer          @relation(fields: [customerId], references: [id])
+  customer   Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
   customerId String
   service    Service           @relation(fields: [serviceId], references: [id])
   serviceId  String
@@ -74,7 +74,7 @@ enum WaitlistStatus {
 
 model WaitlistEntry {
   id           String         @id @default(cuid())
-  customer     Customer       @relation(fields: [customerId], references: [id])
+  customer     Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
   customerId   String
   service      Service        @relation(fields: [serviceId], references: [id])
   serviceId    String
