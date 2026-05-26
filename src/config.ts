@@ -17,6 +17,19 @@ export const SPA = {
   slotStepMinutes: 15,
 };
 
+// Voice the assistant speaks with. Passed straight through to Vapi as the
+// `voice` field, so these keys match Vapi's ElevenLabs voice schema.
+export const VOICE = {
+  provider: '11labs',
+  voiceId: '6fZce9LFNG3iEITDfqZZ',
+  model: 'eleven_multilingual_v2',
+  stability: 0.5,
+  similarityBoost: 0.8,
+  style: 0.3,
+  useSpeakerBoost: true,
+  optimizeStreamingLatency: 1,
+};
+
 // If VAPI_SECRET is blank the webhook skips the header check (handy for local
 // testing). ALWAYS set it in production so only Vapi can hit your endpoints.
 export const VAPI_SECRET = process.env.VAPI_SECRET ?? '';

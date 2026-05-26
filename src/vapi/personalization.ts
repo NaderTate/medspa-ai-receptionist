@@ -4,7 +4,7 @@
 // their history into the system prompt. Unknown callers get a clean new-client
 // flow. Everything else (the tools) is identical either way.
 
-import { SPA } from '../config.js';
+import { SPA, VOICE } from '../config.js';
 import { findCustomerByPhone, pastVisits, upcomingAppointments } from '../lib/customers.js';
 import { humanTime } from '../lib/time.js';
 
@@ -147,6 +147,6 @@ You already know who they are — do not ask for their name.`;
       messages: [{ role: 'system', content: `${SHARED_RULES}\n\n${context}` }],
       tools: toolDefinitions,
     },
-    voice: { provider: '11labs', voiceId: '21m00Tcm4TlvDq8ikWAM' }, // ElevenLabs "Rachel" — must be the voice ID, not the name
+    voice: VOICE,
   };
 }
