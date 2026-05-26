@@ -99,7 +99,7 @@ const toolDefinitions = [
       description: 'Create a record for a new caller. Use before booking if the caller is unknown.',
       parameters: {
         type: 'object',
-        properties: { fullName: { type: 'string' }, email: { type: 'string' } },
+        properties: { fullName: { type: 'string' } },
         required: ['fullName'],
       },
     },
@@ -110,7 +110,7 @@ const SHARED_RULES = `You are the friendly phone receptionist for ${SPA.name}, a
 Speak warmly and concisely, like a great front-desk person. Confirm details back before booking.
 Never invent open times — always call check_availability first and only offer times it returns.
 All times are in ${SPA.timeZoneLabel}. Today is ${new Date().toDateString()}.
-If a caller wants to cancel, do it, then mention we'll text the waitlist so the slot doesn't go to waste.`;
+If a caller wants to cancel, do it and confirm the cancellation.`;
 
 export async function buildAssistant(callerPhone: string) {
   const customer = callerPhone ? await findCustomerByPhone(callerPhone) : null;
@@ -147,6 +147,6 @@ You already know who they are — do not ask for their name.`;
       messages: [{ role: 'system', content: `${SHARED_RULES}\n\n${context}` }],
       tools: toolDefinitions,
     },
-    voice: { provider: '11labs', voiceId: 'rachel' },
+    voice: { provider: '11labs', voiceId: '21m00Tcm4TlvDq8ikWAM' }, // ElevenLabs "Rachel" — must be the voice ID, not the name
   };
 }

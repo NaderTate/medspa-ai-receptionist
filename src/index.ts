@@ -3,9 +3,10 @@
 
 import cors from 'cors';
 import express from 'express';
-import { PORT, SPA } from './config.js';
+import { PORT, REMINDER_HOUR, SPA } from './config.js';
 import { vapiRouter } from './routes/vapi.js';
 import { apiRouter } from './routes/api.js';
+import { startDailyReminderJob } from './lib/reminders.js';
 
 const app = express();
 app.use(cors()); // the dashboard runs on a different port in dev, so allow cross-origin reads
@@ -21,4 +22,6 @@ app.use('/api', apiRouter);
 app.listen(PORT, () => {
   console.log(`${SPA.name} receptionist backend listening on http://localhost:${PORT}`);
   console.log(`Vapi webhook: POST http://localhost:${PORT}/vapi/webhook`);
+  // Daily appointment-reminder texts, run in-process while the server is up.
+  startDailyReminderJob(REMINDER_HOUR);
 });

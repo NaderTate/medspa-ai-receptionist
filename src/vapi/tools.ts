@@ -99,17 +99,15 @@ export const tools = {
     return {
       rescheduled: true,
       message: `Moved your ${result.appointment.service.name} to ${humanTime(result.appointment.startTime)}.`,
-      waitlistNotified: result.waitlistNotified?.customerName ?? null,
     };
   },
 
   async cancel_appointment(args: { serviceName?: string }, ctx: ToolContext) {
     const appt = await resolveCallerAppointment(ctx.callerPhone, args.serviceName);
-    const result = await cancelAppointment(appt.id);
+    await cancelAppointment(appt.id);
     return {
       cancelled: true,
       message: `Cancelled your ${appt.service.name} on ${humanTime(appt.startTime)}.`,
-      waitlistNotified: result.waitlistNotified?.customerName ?? null,
     };
   },
 
@@ -128,10 +126,10 @@ export const tools = {
     return { added: true, message: `You're on the ${service.name} waitlist. We'll text you the moment a matching slot frees up.` };
   },
 
-  async register_customer(args: { fullName: string; email?: string }, ctx: ToolContext) {
+  async register_customer(args: { fullName: string }, ctx: ToolContext) {
     const existing = await findCustomerByPhone(ctx.callerPhone);
     if (existing) return { registered: true, message: `You're already in our system, ${existing.fullName}.` };
-    const customer = await registerCustomer({ fullName: args.fullName, phone: ctx.callerPhone, email: args.email });
+    const customer = await registerCustomer({ fullName: args.fullName, phone: ctx.callerPhone });
     return { registered: true, message: `Thanks ${customer.fullName}, you're all set up. What would you like to book?` };
   },
 };

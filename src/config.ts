@@ -21,3 +21,7 @@ export const SPA = {
 // testing). ALWAYS set it in production so only Vapi can hit your endpoints.
 export const VAPI_SECRET = process.env.VAPI_SECRET ?? '';
 export const PORT = Number(process.env.PORT ?? 3000);
+
+// Hour of day (0–23, server local time) the daily appointment-reminder job runs.
+// Override with REMINDER_HOUR to fire it sooner when demoing.
+export const REMINDER_HOUR = Number(process.env.REMINDER_HOUR ?? 9);
