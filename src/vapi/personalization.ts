@@ -143,7 +143,7 @@ You already know who they are — do not ask for their name.`;
     firstMessage,
     model: {
       provider: 'openai',
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages: [{ role: 'system', content: `${SHARED_RULES}\n\n${context}` }],
       tools: toolDefinitions,
     },
