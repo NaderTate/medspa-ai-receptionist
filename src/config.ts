@@ -22,7 +22,7 @@ export const SPA = {
 export const VOICE = {
   provider: '11labs',
   voiceId: '6fZce9LFNG3iEITDfqZZ',
-  model: 'eleven_multilingual_v2',
+  model: 'eleven_flash_v2_5', // ~75ms latency, still 32-language multilingual, ~half the TTS cost of multilingual_v2
   stability: 0.5,
   similarityBoost: 0.8,
   style: 0.3,
