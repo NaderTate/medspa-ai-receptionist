@@ -3,8 +3,9 @@
 // call at pickup), we answer with a degraded-but-valid fallback.
 
 // Guarantees:
-//  - fallback() runs at most once, even if the deadline fires and the primary
-//    later rejects (side effects must not double-run).
+//  - a NON-THROWING fallback() runs at most once, even if the deadline fires
+//    and the primary later rejects (side effects must not double-run). A
+//    fallback that throws on its first call may be retried by the other path.
 //  - a throwing fallback() rejects the returned promise instead of hanging it.
 
 export async function raceWithFallback<T>(primary: Promise<T>, deadlineMs: number, fallback: () => T): Promise<T> {
