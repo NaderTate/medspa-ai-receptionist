@@ -72,8 +72,10 @@ async function main() {
   show(`New caller: check_availability (Botox, ${date})`, avail);
 
   // Dig the first offered slot out of the webhook's nested response shape:
-  // { results: [ { toolCallId, result: { options: [...] } } ] }
-  const first = avail?.results?.[0]?.result?.options?.[0];
+  // { results: [ { toolCallId, result: "<json string>" } ] } — result is now
+  // always a JSON string, so parse it before reading .options.
+  const availResult = JSON.parse(avail?.results?.[0]?.result ?? '{}');
+  const first = availResult?.options?.[0];
   if (first) {
     const booked = await toolCall(newCaller, 'book_appointment', {
       serviceName: 'Botox',

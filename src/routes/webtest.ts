@@ -49,6 +49,7 @@ webtestRouter.get('/assistant', async (req: Request, res: Response) => {
     // local secret reaching the browser is acceptable (do not enable in prod).
     assistant.server = {
       url: `${base}/vapi/webhook`,
+      timeoutSeconds: 10,
       ...(VAPI_SECRET ? { secret: VAPI_SECRET } : {}),
     };
 

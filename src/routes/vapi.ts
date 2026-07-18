@@ -5,7 +5,8 @@
 
 import { Router, type Request, type Response } from 'express';
 import { VAPI_SECRET } from '../config.js';
-import { buildAssistant } from '../vapi/personalization.js';
+import { raceWithFallback } from '../lib/async.js';
+import { buildAssistant, buildFallbackAssistant } from '../vapi/personalization.js';
 import { tools, type ToolContext } from '../vapi/tools.js';
 
 export const vapiRouter = Router();
@@ -19,20 +20,26 @@ function callerPhoneFrom(message: VapiCaller): string {
   return message?.call?.customer?.number ?? message?.customer?.number ?? '';
 }
 
-// Look the handler up by the name the agent sent (like calling tools[name](args)),
-// parse its arguments, run it, and turn any failure into recoverable data — so a
-// single bad action becomes "that didn't work, want to try X?" instead of a
-// dropped call or a 500.
-async function runToolCall(call: VapiToolCall, ctx: ToolContext) {
+// Vapi's assistant-request webhook has a hard, non-configurable 7.5s end-to-end
+// budget; missing it fails the call at pickup. We spend at most 4.5s on
+// personalization, then ship the generic fallback — the call ALWAYS connects.
+const ASSISTANT_BUILD_BUDGET_MS = 4500;
+
+// Vapi's tool contract: the response must be HTTP 200 and each result must be
+// a STRING with the exact toolCallId echoed back — anything else is silently
+// discarded and the caller hears dead air. Errors ride inside the result
+// string as JSON so the model reads them as data and recovers conversationally.
+async function runToolCall(call: VapiToolCall, ctx: ToolContext): Promise<string> {
   const name = call.function?.name ?? '';
   const handler = (tools as Record<string, (a: unknown, c: ToolContext) => Promise<unknown>>)[name];
-  if (!handler) return { error: `Unknown tool "${name}".` };
+  if (!handler) return JSON.stringify({ error: `Unknown tool "${name}".` });
   try {
     const raw = call.function?.arguments ?? {};
     const args = typeof raw === 'string' ? JSON.parse(raw || '{}') : raw;
-    return await handler(args, ctx);
+    const value = await handler(args, ctx);
+    return typeof value === 'string' ? value : JSON.stringify(value);
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Something went wrong.' };
+    return JSON.stringify({ error: err instanceof Error ? err.message : 'Something went wrong.' });
   }
 }
 
@@ -45,7 +52,7 @@ vapiRouter.post('/webhook', async (req: Request, res: Response) => {
   const callerPhone = callerPhoneFrom(message);
 
   if (message.type === 'assistant-request') {
-    const assistant = await buildAssistant(callerPhone);
+    const assistant = await raceWithFallback(buildAssistant(callerPhone), ASSISTANT_BUILD_BUDGET_MS, buildFallbackAssistant);
     return res.json({ assistant });
   }
 
