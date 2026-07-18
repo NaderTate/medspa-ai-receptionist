@@ -5,8 +5,58 @@
 // flow. Everything else (the tools) is identical either way.
 
 import { SPA, VOICE } from '../config.js';
-import { findCustomerByPhone, pastVisits, upcomingAppointments } from '../lib/customers.js';
+import { customerProfile } from '../lib/customers.js';
 import { humanTime } from '../lib/time.js';
+
+// --- Reliability configuration ---------------------------------------------
+// Each value prevents a specific verified failure mode. Values locked per the
+// 2026-07-18 research pass; see docs/superpowers/plans/2026-07-18-vapi-reliability-hardening.md.
+
+// False barge-in was the #1 cause of "stops talking mid-sentence": the default
+// stopSpeakingPlan (numWords 0) interrupts on raw voice-activity detection,
+// which triggers on echo, breaths, and coughs even in a quiet room. numWords 2
+// requires two *transcribed words* before the assistant yields.
+const START_SPEAKING_PLAN = { waitSeconds: 0.7 };
+const STOP_SPEAKING_PLAN = { numWords: 2, voiceSeconds: 0.5, backoffSeconds: 1 };
+
+// Explicit transcriber (not the account default) so we control the model and
+// can attach a fallback — a dead STT provider otherwise means the assistant
+// "hears" nothing for the rest of the call.
+const TRANSCRIBER = {
+  provider: 'deepgram',
+  model: 'nova-3',
+  language: 'en',
+  fallbackPlan: { transcribers: [{ provider: 'deepgram', model: 'nova-2', language: 'en' }] },
+};
+
+// Without a voice fallback, a single ElevenLabs error terminates the call
+// (pipeline-error-eleven-labs-voice-failed). Order: alternate 11labs voice
+// first (closest sound), cross-provider voice as last resort.
+const VOICE_FALLBACK_PLAN = {
+  voices: [
+    { provider: '11labs', voiceId: '21m00Tcm4TlvDq8ikWAM', model: 'eleven_flash_v2_5' },
+    { provider: 'openai', voiceId: 'shimmer' },
+  ],
+};
+
+// If the caller goes quiet, re-prompt twice instead of sitting in dead air
+// until Vapi's silence timeout kills the call. (messagePlan.idleMessages no
+// longer exists in Vapi's API; this hook is the current mechanism.)
+const HOOKS = [
+  {
+    on: 'customer.speech.timeout',
+    options: { timeoutSeconds: 10, triggerMaxCount: 2, triggerResetMode: 'onUserSpeech' },
+    do: [{ type: 'say', exact: "Are you still there? I can check times or book whenever you're ready." }],
+  },
+];
+
+// Spoken cover for tool latency: idle hooks are disabled during tool calls, so
+// these messages are the only thing between a slow webhook and silent dead air.
+const TOOL_MESSAGES = [
+  { type: 'request-start', content: 'One moment while I check that for you.' },
+  { type: 'request-response-delayed', content: 'Thanks for your patience — almost done.', timingMilliseconds: 4000 },
+  { type: 'request-failed', content: "I'm sorry, that didn't go through just now. Let's try once more." },
+];
 
 // The functions the model is allowed to call, described for Vapi. Names + params
 // match the handlers in tools.ts.
@@ -112,19 +162,41 @@ Never invent open times — always call check_availability first and only offer 
 All times are in ${SPA.timeZoneLabel}. Today is ${new Date().toDateString()}.
 If a caller wants to cancel, do it and confirm the cancellation.`;
 
+// Everything reliability-related, identical for every caller.
+function assistantBase() {
+  return {
+    transcriber: TRANSCRIBER,
+    voice: { ...VOICE, fallbackPlan: VOICE_FALLBACK_PLAN },
+    startSpeakingPlan: START_SPEAKING_PLAN,
+    stopSpeakingPlan: STOP_SPEAKING_PLAN,
+    backgroundDenoisingEnabled: true,
+    hooks: HOOKS,
+  };
+}
+
+function assistantModel(context: string) {
+  return {
+    provider: 'openai',
+    model: 'gpt-4o-mini',
+    fallbackModels: ['gpt-4o'],
+    messages: [{ role: 'system', content: `${SHARED_RULES}\n\n${context}` }],
+    tools: toolDefinitions.map((t) => ({ ...t, messages: TOOL_MESSAGES })),
+  };
+}
+
 export async function buildAssistant(callerPhone: string) {
-  const customer = callerPhone ? await findCustomerByPhone(callerPhone) : null;
+  const profile = callerPhone ? await customerProfile(callerPhone) : null;
 
   let firstMessage: string;
   let context: string;
 
-  if (customer) {
-    const [upcoming, history] = await Promise.all([upcomingAppointments(customer.id), pastVisits(customer.id)]);
+  if (profile) {
+    const { customer, upcoming, past } = profile;
     const upcomingLine = upcoming.length
       ? `They have an upcoming ${upcoming[0]!.service.name} with ${upcoming[0]!.staff.name} on ${humanTime(upcoming[0]!.startTime)}.`
       : 'They have no upcoming appointments.';
-    const historyLine = history.length
-      ? `Past visits: ${history.map((h) => h.service.name).join(', ')}.`
+    const historyLine = past.length
+      ? `Past visits: ${past.map((h) => h.service.name).join(', ')}.`
       : 'No past visits on record.';
 
     firstMessage = upcoming.length
@@ -139,14 +211,19 @@ You already know who they are — do not ask for their name.`;
     context = `The caller is not in our system (new client). If they want to book, use register_customer to take their name first, then book.`;
   }
 
+  return { ...assistantBase(), firstMessage, model: assistantModel(context) };
+}
+
+// Degraded-but-working assistant for when personalization can't complete in
+// time (DB cold start or outage). The call ALWAYS connects; the agent can
+// recover the caller's details mid-call via get_my_details once the DB wakes.
+export function buildFallbackAssistant() {
+  const context = `You could not load this caller's record before the call connected (temporary system delay).
+Treat them warmly as a possibly-returning client. If you need their details, call get_my_details — it may work now.
+If they want to book and get_my_details finds nothing, register them with register_customer first.`;
   return {
-    firstMessage,
-    model: {
-      provider: 'openai',
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'system', content: `${SHARED_RULES}\n\n${context}` }],
-      tools: toolDefinitions,
-    },
-    voice: VOICE,
+    ...assistantBase(),
+    firstMessage: `Thanks for calling ${SPA.name}! How can I help you today?`,
+    model: assistantModel(context),
   };
 }
