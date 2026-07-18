@@ -3,7 +3,7 @@
 // number, does the work, and returns a short, speech-friendly result the agent
 // reads back to the caller.
 
-import { prisma } from '../lib/db.js';
+import { getServices } from '../lib/catalog.js';
 import { findCustomerByPhone, registerCustomer, upcomingAppointments } from '../lib/customers.js';
 import { findOpenSlots } from '../lib/availability.js';
 import { bookAppointment, cancelAppointment, rescheduleAppointment } from '../lib/booking.js';
@@ -16,7 +16,7 @@ export type ToolContext = { callerPhone: string };
 // helpful error listing real services if there's no match, so the agent can
 // recover instead of guessing.
 async function resolveService(serviceName: string) {
-  const services = await prisma.service.findMany();
+  const services = await getServices();
   const match = services.find((s) => s.name.toLowerCase() === serviceName.trim().toLowerCase());
   if (!match) {
     const names = services.map((s) => s.name).join(', ');

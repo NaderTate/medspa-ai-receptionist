@@ -6,6 +6,7 @@
 // any provider who can take the slot.
 
 import { prisma } from './db.js';
+import { getServices, getStaff } from './catalog.js';
 import { SPA } from '../config.js';
 import { addMinutes, nextDayStart, openingWindow, rangesOverlap, startOfDay } from './time.js';
 
@@ -17,13 +18,13 @@ export type OpenSlot = {
 };
 
 export async function findOpenSlots(serviceId: string, day: Date): Promise<OpenSlot[]> {
-  const service = await prisma.service.findUnique({ where: { id: serviceId } });
+  const service = (await getServices()).find((s) => s.id === serviceId);
   if (!service) throw new Error('Unknown service.');
 
   const window = openingWindow(day);
   if (!window) return []; // spa is closed that day
 
-  const staff = await prisma.staffMember.findMany();
+  const staff = await getStaff();
 
   // All booked appointments that day, so we can rule out conflicts.
   const dayStart = startOfDay(day);
