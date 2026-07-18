@@ -5,7 +5,7 @@
 
 import { prisma } from './db.js';
 import { SPA } from '../config.js';
-import { sendSms } from './sms.js';
+import { sendSmsSafe } from './sms.js';
 import { humanTime } from './time.js';
 
 export function addToWaitlist(input: {
@@ -39,7 +39,7 @@ export async function notifyWaitlistForFreedSlot(serviceId: string, freedStart: 
     data: { status: 'NOTIFIED', notifiedAt: new Date() },
   });
 
-  await sendSms(
+  void sendSmsSafe(
     entry.customer.phone,
     `${SPA.name}: a ${entry.service.name} slot just opened on ${humanTime(freedStart)}. ` +
       `Reply or call to grab it — first come, first served.`,

@@ -5,7 +5,7 @@
 
 import { prisma } from './db.js';
 import { SPA } from '../config.js';
-import { sendSms } from './sms.js';
+import { sendSmsSafe } from './sms.js';
 import { humanTime } from './time.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -23,7 +23,7 @@ export async function sendDueReminders(): Promise<number> {
   });
 
   for (const appt of due) {
-    await sendSms(
+    await sendSmsSafe(
       appt.customer.phone,
       `${SPA.name} reminder: your ${appt.service.name} with ${appt.staff.name} is on ${humanTime(appt.startTime)}. ` +
         `Reply to reschedule or cancel.`,

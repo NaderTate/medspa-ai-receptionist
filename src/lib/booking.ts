@@ -6,7 +6,7 @@ import { prisma } from './db.js';
 import { SPA } from '../config.js';
 import { isStaffFree } from './availability.js';
 import { notifyWaitlistForFreedSlot } from './waitlist.js';
-import { sendSms } from './sms.js';
+import { sendSmsSafe } from './sms.js';
 import { addMinutes, humanTime } from './time.js';
 
 export async function bookAppointment(input: {
@@ -35,7 +35,7 @@ export async function bookAppointment(input: {
     include: { customer: true, service: true, staff: true },
   });
 
-  await sendSms(
+  void sendSmsSafe(
     appointment.customer.phone,
     `${SPA.name}: you're booked for ${service.name} with ${appointment.staff.name} on ${humanTime(input.startTime)}. See you then!`,
   );
@@ -67,7 +67,7 @@ export async function rescheduleAppointment(input: { appointmentId: string; newS
     include: { service: true, staff: true, customer: true },
   });
 
-  await sendSms(
+  void sendSmsSafe(
     updated.customer.phone,
     `${SPA.name}: your ${updated.service.name} is moved to ${humanTime(input.newStartTime)} with ${updated.staff.name}.`,
   );
@@ -89,7 +89,7 @@ export async function cancelAppointment(appointmentId: string) {
 
   await prisma.appointment.update({ where: { id: appointmentId }, data: { status: 'CANCELLED' } });
 
-  await sendSms(
+  void sendSmsSafe(
     appointment.customer.phone,
     `${SPA.name}: your ${appointment.service.name} on ${humanTime(appointment.startTime)} is cancelled. Hope to see you soon!`,
   );
