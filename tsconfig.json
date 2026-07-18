@@ -3,7 +3,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": ["node"],
+    "types": ["node", "bun"],
     "lib": ["ESNext"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -13,5 +13,5 @@
     "verbatimModuleSyntax": false,
     "noEmit": true
   },
-  "include": ["src", "scripts", "prisma"]
+  "include": ["src", "scripts", "prisma", "tests"]
 }

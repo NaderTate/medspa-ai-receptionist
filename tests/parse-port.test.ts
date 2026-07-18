@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, it, spyOn } from 'bun:test';
 import { parsePort } from '../src/config.js';
 
 describe('parsePort', () => {
@@ -16,9 +16,15 @@ describe('parsePort', () => {
     expect(parsePort("'8080'")).toBe(8080);
   });
 
-  it('falls back to 3000 on garbage instead of NaN', () => {
-    expect(parsePort('abc')).toBe(3000);
-    expect(parsePort('0')).toBe(3000);
-    expect(parsePort('70000')).toBe(3000);
+  it('falls back to 3000 on garbage instead of NaN, and warns', () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      expect(parsePort('abc')).toBe(3000);
+      expect(parsePort('0')).toBe(3000);
+      expect(parsePort('70000')).toBe(3000);
+      expect(warn).toHaveBeenCalledTimes(3);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
