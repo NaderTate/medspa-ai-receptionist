@@ -17,3 +17,20 @@ if (!connectionString) {
 const adapter = new PrismaNeon({ connectionString });
 
 export const prisma = new PrismaClient({ adapter });
+
+// Neon suspends its compute after ~5 idle minutes, and the wake-up costs
+// multiple seconds — enough to blow Vapi's hard 7.5s assistant-request budget
+// on the first call after a quiet spell. A cheap periodic ping keeps the
+// compute awake while the server runs; the boot-time ping also warms the very
+// first call after a deploy.
+export function startDbKeepWarm(
+  intervalMs = 4 * 60_000,
+  ping: () => Promise<unknown> = () => prisma.$queryRaw`SELECT 1`,
+): () => void {
+  const run = () => {
+    void ping().catch((err) => console.warn('[db] keep-warm ping failed:', err));
+  };
+  run();
+  const timer = setInterval(run, intervalMs);
+  return () => clearInterval(timer);
+}

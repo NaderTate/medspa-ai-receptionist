@@ -4,6 +4,7 @@
 import { PORT, REMINDER_HOUR, SPA } from './config.js';
 import { createApp } from './app.js';
 import { startDailyReminderJob } from './lib/reminders.js';
+import { startDbKeepWarm } from './lib/db.js';
 
 createApp().listen(PORT, () => {
   console.log(`${SPA.name} receptionist backend listening on http://localhost:${PORT}`);
@@ -13,4 +14,7 @@ createApp().listen(PORT, () => {
   }
   // Daily appointment-reminder texts, run in-process while the server is up.
   startDailyReminderJob(REMINDER_HOUR);
+  // Keep the Neon compute awake so call pickup never pays a cold start.
+  startDbKeepWarm();
+  console.log('[db] keep-warm ping every 4 minutes');
 });
