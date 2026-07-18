@@ -33,7 +33,21 @@ export const VOICE = {
 // If VAPI_SECRET is blank the webhook skips the header check (handy for local
 // testing). ALWAYS set it in production so only Vapi can hit your endpoints.
 export const VAPI_SECRET = process.env.VAPI_SECRET ?? '';
-export const PORT = Number(process.env.PORT ?? 3000);
+
+// Parse PORT defensively: shells and profiles sometimes hand us values wrapped
+// in literal quotes, and Number(garbage) is NaN — Express would then silently
+// bind a random port while Vapi/ngrok keep pointing at the configured one.
+export function parsePort(raw: string | undefined): number {
+  const cleaned = (raw ?? '').trim().replace(/^["']|["']$/g, '');
+  if (!cleaned) return 3000;
+  const port = Number(cleaned);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    console.warn(`[config] Ignoring invalid PORT value ${JSON.stringify(raw)}; using 3000.`);
+    return 3000;
+  }
+  return port;
+}
+export const PORT = parsePort(process.env.PORT);
 
 // Hour of day (0–23, server local time) the daily appointment-reminder job runs.
 // Override with REMINDER_HOUR to fire it sooner when demoing.
